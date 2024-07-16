@@ -1,8 +1,2 @@
 /backend/node_modules
 /frontend/talk-d1/node_modules
-logs
-*.log
-.DS_Store
-/frontend/build
-/frontend/dist
-.env

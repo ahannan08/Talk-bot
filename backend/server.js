@@ -4,9 +4,11 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
-import userRouter from './Routes/user.route.js';
-import messageRouter from './Routes/message.route.js';
-import conversationRouter from './Routes/conversation.route.js';
+import authRoutes from './routes/auth.route.js'; // Adjust paths as needed
+import userRoutes from './routes/user.route.js'; // Adjust paths as needed
+import messageRoutes from './routes/message.route.js'; // Adjust paths as needed
+import conversationRoutes from './routes/conversation.route.js'; 
+
 
 // Initialize express app
 const app = express();
@@ -32,9 +34,11 @@ mongoose.connect("mongodb+srv://messi:messi@ntcluster.4xpi75r.mongodb.net/?retry
     console.log("MongoDB connected");
 }).catch(err => console.error(err));
 
-app.use('/api/users', userRouter);
-app.use('/api/messages', messageRouter);
-app.use('/api/conversations', conversationRouter);
+
+app.use('/api/auth', authRoutes); // Authentication routes
+app.use('/api/users', userRoutes); // User routes
+app.use('/api/messages', messageRoutes); // Message routes
+app.use('/api/conversations', conversationRoutes); // Conversation routes
 
 io.on('connection', (socket) => {
     console.log('A user connected');
@@ -42,9 +46,14 @@ io.on('connection', (socket) => {
         socket.join(room);
         console.log(`${username} joined ${room}`);
     });
-
-    socket.on('sendMessage', (message) => {
-        io.to(message.conversationId).emit('message', message);
+    socket.on('sendMessage', async (message) => {
+        try {
+            const newMessage = new Message(message);
+            await newMessage.save();
+            io.to(message.conversationId).emit('message', newMessage);
+        } catch (error) {
+            console.error('Error saving message:', error);
+        }
     });
 
     socket.on('disconnect', () => {
