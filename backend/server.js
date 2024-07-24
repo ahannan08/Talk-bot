@@ -10,6 +10,8 @@ import messageRoutes from './routes/message.route.js';
 import conversationRoutes from './routes/conversation.route.js';
 import Message from './models/Message.js';
 import User from './models/User.js';
+import { sendMessage } from "./controllers/message.controller.js"
+import axios from "axios"
 
 // Initialize express app
 const app = express();
@@ -26,6 +28,8 @@ app.use(cors({
     origin: ["http://localhost:3000", "http://localhost:3002"]
 }));
 app.use(bodyParser.json());
+app.use(express.json()); // For parsing application/json
+
 
 // MongoDB connection
 mongoose.connect("mongodb+srv://messi:messi@ntcluster.4xpi75r.mongodb.net/?retryWrites=true&w=majority&appName=NTcluster", {
@@ -68,10 +72,22 @@ io.on('connection', (socket) => {
         socket.to(conversationId).emit('stopTyping', { username });
     });
 
-    socket.on('sendMessage', (messageData) => {
-        const { conversationId } = messageData;
-        io.to(conversationId).emit('message', messageData);
+   
+    socket.on('sendMessage', async (messageData) => {
+        console.log('Received messageData:', messageData);
+
+        try {
+            // Send data to Express route
+            const response = await axios.post('http://localhost:3010/api/messages/', messageData);
+
+            // Emit the message to the relevant room
+            socket.to(messageData.conversationId).emit('message', response.data.message);
+        } catch (error) {
+            console.error('Error processing sendMessage event:', error);
+        }
     });
+
+
 
     socket.on('markAsRead', async ({ messageId, username, conversationId }) => {
         try {

@@ -1,0 +1,68 @@
+import bcrypt from 'bcryptjs';
+import User from '../models/User.js';
+import Conversation from '../models/Conversation.js';
+import mongoose from 'mongoose';
+import io from '../path/to/your/socket.js'; // Ensure correct path to socket
+
+export const registerUser = async (req, res) => {
+    const { username, password, isAdmin } = req.body;
+
+    try {
+        // Check if user already exists
+        let user = await User.findOne({ username });
+        if (user) {
+            return res.status(400).json({ msg: 'User already exists' });
+        }
+
+        // Create new user
+        user = new User({ username, password, isAdmin: isAdmin || false });
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+
+        // Save user
+        await user.save();
+
+        if (!user.isAdmin) {
+            // Fetch an admin user dynamically
+            const admin = await User.findOne({ isAdmin: true });
+            if (!admin) {
+                return res.status(500).json({ msg: 'No admin found to start a conversation' });
+            }
+
+            // Create conversation with the new user and the admin
+            const newConversation = new Conversation({
+                participants: [admin._id, user._id],
+            });
+            await newConversation.save();
+
+            // Notify the client
+            io.emit('userRegistered', {
+                username: user.username,
+                isAdmin: user.isAdmin,
+                conversationId: newConversation._id
+            });
+
+            // Send response
+            res.status(201).json({
+                msg: 'User registered successfully',
+                conversationId: newConversation._id
+            });
+        } else {
+            // For admin or special cases where conversation is not needed
+            io.emit('userRegistered', {
+                username: user.username,
+                isAdmin: user.isAdmin
+            });
+
+            res.status(201).json({
+                msg: 'User registered successfully',
+                conversationId: null
+            });
+        }
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+};

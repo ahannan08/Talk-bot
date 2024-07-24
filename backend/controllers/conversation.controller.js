@@ -9,6 +9,10 @@ export const createConversation = async (req, res) => {
         // Find users by usernames
         const sender = await User.findOne({ username: senderUsername });
         const receiver = await User.findOne({ username: receiverUsername });
+        console.log("sender backend is",sender)
+        console.log("rcv backend is",receiver)
+
+        
 
         if (!sender || !receiver) {
             return res.status(404).json({ error: 'User not found' });
@@ -34,11 +38,15 @@ export const createConversation = async (req, res) => {
 // Get conversation ID
 export const getConversationId = async (req, res) => {
     const { senderUsername, receiverUsername } = req.params;
+   
 
     try {
         // Find users by usernames
         const sender = await User.findOne({ username: senderUsername });
         const receiver = await User.findOne({ username: receiverUsername });
+        console.log("sender backend is",sender)
+        console.log("rcv backend is",receiver)
+    
 
         if (!sender || !receiver) {
             return res.status(404).json({ error: 'User not found' });

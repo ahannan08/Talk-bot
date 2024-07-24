@@ -23,7 +23,7 @@ export const registerUser = async (req, res) => {
         await user.save();
 
         // Get ObjectIds for admin and new user
-        const adminId = new mongoose.Types.ObjectId('6691220c5dff689efe41188f'); // Replace with actual admin ID lookup if needed
+        const adminId = new mongoose.Types.ObjectId('669e1fd8af82f2e16d5396a0'); // Replace with actual admin ID lookup if needed
         const newUserId = user._id;
 
         // Create a new conversation with ObjectIds
