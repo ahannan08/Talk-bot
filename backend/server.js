@@ -57,12 +57,20 @@ io.on('connection', (socket) => {
         try {
             await User.updateOne({ username }, { isOnline: true });
             io.emit('statusUpdate', { username, isOnline: true });
+            socket.username = username; // Save username in the socket instance
         } catch (error) {
             console.error("Error updating user status:", error);
         }
     });
 
-
+    socket.on('userOffline', async (username) => {
+        try {
+            await User.updateOne({ username }, { isOnline: false });
+            io.emit('statusUpdate', { username, isOnline: false });
+        } catch (error) {
+            console.error("Error updating user status:", error);
+        }
+    });
 
     socket.on('typing', ({ conversationId, username }) => {
         socket.to(conversationId).emit('typing', { username });
@@ -106,7 +114,6 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', async () => {
-        // Handle user disconnection
         const username = socket.username;
         if (username) {
             try {
@@ -119,7 +126,6 @@ io.on('connection', (socket) => {
         console.log('Client disconnected');
     });
 });
-
 server.listen(3010, () => {
     console.log('Server is running on port 3010');
 });
