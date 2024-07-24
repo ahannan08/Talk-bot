@@ -33,7 +33,8 @@ export const sendMessage = async (req, res) => {
             senderUsername,
             receiverUsername,
             message,
-            conversationId: conversation._id
+            conversationId: conversation._id,
+            readBy:[]
         });
 
         const savedMessage = await newMessage.save();
@@ -43,12 +44,7 @@ export const sendMessage = async (req, res) => {
         await conversation.save();
 
         // Emit the message to the relevant room
-        io.to(conversation._id.toString()).emit('message', {
-            senderUsername,
-            receiverUsername,
-            message,
-            conversationId: conversation._id
-        });
+       //io.to(conversation._id.toString()).emit('message', newMessage);
 
         res.status(200).json(savedMessage);
     } catch (err) {
@@ -72,3 +68,25 @@ export const getMessages = async (req, res) => {
         res.status(500).json(err);
     }
 };
+
+// Assuming you're using Express and Mongoose for MongoDB
+export const markMessageAsRead = async (req, res) => {
+    const { messageId, username, conversationId } = req.body;
+
+    try {
+        // Update the readBy field
+        await Message.updateOne(
+            { _id: messageId },
+            { $addToSet: { readBy: username } } // Use $addToSet to avoid duplicate entries
+        );
+
+        const updatedMessage = await Message.findById(messageId);
+        io.to(conversationId).emit('messageRead', { messageId, readBy: updatedMessage.readBy });
+
+        res.status(200).send('Message marked as read');
+    } catch (error) {
+        console.error("Error marking message as read:", error);
+        res.status(500).send('Internal Server Error');
+    }
+};
+

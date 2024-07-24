@@ -1,6 +1,6 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const User = require('./models/User'); // Adjust the path as needed
+import mongoose  from 'mongoose';
+import bcrypt from'bcryptjs';
+import User from'./models/User.js'; // Adjust the path as needed
 
 mongoose.connect("mongodb+srv://messi:messi@ntcluster.4xpi75r.mongodb.net/?retryWrites=true&w=majority&appName=NTcluster", {
   useNewUrlParser: true,
@@ -11,7 +11,7 @@ mongoose.connect("mongodb+srv://messi:messi@ntcluster.4xpi75r.mongodb.net/?retry
 }).catch(err => console.error(err));
 
 const createAdminUser = async () => {
-  const username = 'admin2';
+  const username = 'admin1';
   const password = 'admin';
 
   try {

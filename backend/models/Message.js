@@ -19,6 +19,8 @@ const messageSchema = new mongoose.Schema(
             ref: "Conversation",
             required: true,
         },
+        readBy: [String], // Array to keep track of users who have read the message
+
     },
     { timestamps: true }
 );

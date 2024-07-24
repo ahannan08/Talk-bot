@@ -1,6 +1,9 @@
 import User from '../models/User.js';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { io } from '../server.js'; // Import the io instance
+import Conversation from '../models/Conversation.js'; // Import the Conversation model
+import mongoose from 'mongoose'; // Import mongoose to create ObjectId
 
 // Register user
 export const registerUser = async (req, res) => {
@@ -18,7 +21,21 @@ export const registerUser = async (req, res) => {
         user.password = await bcrypt.hash(password, salt);
 
         await user.save();
-        res.status(201).json({ msg: 'User registered successfully' });
+
+        // Get ObjectIds for admin and new user
+        const adminId = new mongoose.Types.ObjectId('6691220c5dff689efe41188f'); // Replace with actual admin ID lookup if needed
+        const newUserId = user._id;
+
+        // Create a new conversation with ObjectIds
+        const newConversation = new Conversation({
+            participants: [adminId, newUserId],
+        });
+        await newConversation.save();
+
+        const userInfo = { username: user.username, isAdmin: user.isAdmin, conversationId: newConversation._id }; // Include conversationId
+        io.emit('userRegistered', userInfo);
+        
+        res.status(201).json({ msg: 'User registered successfully', conversationId: newConversation._id });
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
